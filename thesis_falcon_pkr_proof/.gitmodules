@@ -1,0 +1,9 @@
+[submodule "easycrypt-rewinding"]
+	path = easycrypt-rewinding
+	url = git@github.com:dfirsov/easycrypt-rewinding.git
+[submodule "easycrypt-zk-code"]
+	path = easycrypt-zk-code
+	url = git@github.com:dfirsov/easycrypt-zk-code.git
+[submodule "fsec"]
+	path = fsec
+	url = https://github.com/jjanku/fsec.git

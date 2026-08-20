@@ -1,0 +1,54 @@
+# This .yml-file configures the CI pipeline of the Gitlab repository which mirrors the GitHub access repository.
+
+# Definition of the 2 sequential stages of the CI pipeline
+stages:
+- structure
+- verification
+
+# This stage checks the structure of the directories and checks by utilizing a reference hash
+# if the verified curves and proofs in the respective directory have been changed manually.
+check_directories:
+  stage: structure
+  before_script:
+    - apt-get update -y -qq
+    - apt-get install git -y # Install Git
+  image: ubuntu:latest # Runtime environment is a Linux Ubuntu docker container
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "external_pull_request_event" # Stage will only be executed in pull request
+  script:
+    - git clone https://oauth2:${ACCESS_GITHUB_TOKEN}@github.com/[GITHUB USERNAME]/secuer_ceremony_access.git
+    - git clone https://oauth2:${AUTOMATION_ACCESS_TOKEN}@[GITLAB INSTANCE DOMAIN]/[GITLAB INSTANCE USERNAME]/secuer_ceremony_storage.git
+    - sh secuer_ceremony_storage/test_directories.sh
+
+# This stage checks the denomination and plausibility of the new additions "curve*.txt" and "proof*.txt".
+# The number has to match with the latest verified curve and proof in the respective directories and
+# the curve addition has to start at the latest verified curve - the "tip curve".
+check_additions:
+  stage: structure
+  before_script:
+    - apt-get update -y -qq
+    - apt-get install git -y # Install Git
+  image: ubuntu:latest # Runtime environment is a Linux Ubuntu docker container
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "external_pull_request_event" # Stage will only be executed in pull request
+  script:
+    - git clone https://oauth2:${AUTOMATION_ACCESS_TOKEN}@[GITLAB INSTANCE DOMAIN]/[GITLAB INSTANCE USERNAME]/secuer_ceremony_storage.git
+    - git clone https://oauth2:${ACCESS_GITHUB_TOKEN}@github.com/[GITHUB USERNAME]/secuer_ceremony_access.git
+    - sh secuer_ceremony_storage/test_additions.sh
+
+# This stage checks the correctness of the provided proof and curve by utilizing
+# a reliable instance of the verification application (SECUER-PoK tools).
+check_verify:
+  stage: verification
+  before_script:
+    - apt-get update -y -qq
+    - apt-get install git -y # Install Git
+    - apt-get install make -y # Install CMake
+    - apt-get install clang -y # Install clang
+  image: ubuntu:latest # Runtime environment is a Linux Ubuntu docker container
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "external_pull_request_event" # Stage will only be executed in pull request
+  script:
+    - git clone https://oauth2:${AUTOMATION_ACCESS_TOKEN}@[GITLAB INSTANCE DOMAIN]/[GITLAB INSTANCE USERNAME]/secuer_ceremony_storage.git
+    - git clone https://oauth2:${ACCESS_GITHUB_TOKEN}@github.com/[GITHUB USERNAME]/secuer_ceremony_access.git
+    - sh secuer_ceremony_storage/test_verify.sh
